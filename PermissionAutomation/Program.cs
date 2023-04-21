@@ -1,11 +1,14 @@
-﻿namespace PermissionAutomation
+﻿using System;
+
+namespace PermissionAutomation
 {
     public class Program
     {
+
         static void Main(string[] args)
         {
             PermissionAutomationService _permissionAutomationService = new PermissionAutomationService();
-            _permissionAutomationService.GeneratePermission();
+            _permissionAutomationService.GeneratePermission(typeof(IListOfAbstractMethods));
         }
     }
 }

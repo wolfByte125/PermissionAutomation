@@ -7,18 +7,10 @@ namespace PermissionAutomation
 {
     public class PermissionAutomationService
     {
-        /// <summary>
-        /// 
-        /// TAKES `NAMESPACE` AND `CLASS NAME` AS PARAMS
-        /// TO BE USED FOR THE FILE TO BE CREATED 
-        /// IF `NAMESPACE` OR `CLASS NAME` ARE NULL OR EMPTY
-        /// IT USES THE `NAMESPACE` AND `CLASS NAME` OF THE
-        /// CALLING METHOD
-        /// 
-        /// </summary>
+        // CREATES A PERMISSION CALLING METHOD
         public void GeneratePermission(string nameSpace = "NAMESPACE_GOES_HERE", string className = "PERMISSION_CLASS")
         {
-            string permissionName = "";
+            Permission permission = new Permission();
             string unchangedClassName = className;
 
             // GET CALLING METHOD NAME
@@ -32,32 +24,36 @@ namespace PermissionAutomation
             // className = HandleRepeatedFileName(className, unchangedClassName);
             #endregion
 
-            #region PERMISSION NAME CREATOR
-            // WRITE PERMISSION BASED ON METHOD NAME
-            if (callingMethodName.ToLower().StartsWith("get") && callingMethodName.ToLower().EndsWith("s"))
-            {
-                permissionName = $"CanView{callingMethodName.Replace("Get", "")}";
-            }
-            else if (callingMethodName.ToLower().StartsWith("get") && !callingMethodName.ToLower().EndsWith("s"))
-            {
-                permissionName = $"CanView{callingMethodName.Replace("Get", "")}s";
-            }
-            else
-            {
-                permissionName = $"Can{callingMethodName}";
-            }
+            permission.permissionName = PermissionCreator(callingMethodName).permissionName;
+            permission.fullPermissionLine = PermissionCreator(callingMethodName).fullPermissionLine;
 
-            // APPEND PERMISSION TO TEXT FILE FOR LATER EXTRACTION
-            using (StreamWriter pen = new StreamWriter("permissions.txt"))
-            {
-                pen.WriteLine($"\t\tpublic bool {permissionName}" + " { get; set; } = false;");
-            }
+            WritePermissionsToClass(nameSpace, className, permission.fullPermissionLine, permission.permissionName);
+        }
+        // TAKES IN INTERFACE AND CREATES A PERMISSION FOR ALL ABSTRACT METHODS IN IT
+        public void GeneratePermission(Type type, string nameSpace = "NAMESPACE_GOES_HERE", string className = "PERMISSION_CLASS")
+        {
+            Permission permission = new Permission();
+            string unchangedClassName = className;
+
+            #region HANDLE REPEATED FILE NAME - INACTIVE
+            /// HANDLE REPEATED FILE NAME - 
+            /// INACTIVE BECAUSE IT CREATES 
+            /// A NEW FILE EVERYTIME
+            // className = HandleRepeatedFileName(className, unchangedClassName);
             #endregion
 
-            // EXTRACT FROM FILE TO WRITE TO CS FILE
-            string fullPermissionLine = File.ReadAllText("permissions.txt");
-            WritePermissionsToClass(nameSpace, className, fullPermissionLine, permissionName);
+            // CREATES PERMISSION FOR EACH ABSTRACT METHOD
+            foreach (var method in type.GetMethods())
+            {
+                if (method.IsAbstract)
+                {
+                    permission.permissionName = PermissionCreator(method.Name).permissionName;
+                    permission.fullPermissionLine = PermissionCreator(method.Name).fullPermissionLine;
+                    WritePermissionsToClass(nameSpace, className, permission.fullPermissionLine, permission.permissionName);
+                }
+            }
         }
+        // WRITES THE GENERATED PERMISSIONS TO A CLASS FILE (.cs)
         private void WritePermissionsToClass(string nameSpace,  string className,  string fullPermissionLine, string permissionName)
         {
             string projectDir = Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + '/';
@@ -121,7 +117,33 @@ namespace PermissionAutomation
             }
             #endregion
         }
-        // REPEATED FILE NAME HANDLER
+        // RETURNS PERMISSION NAME AND FULL PERMISSION LINE BASED ON METHOD NAME PASSED
+        private Permission PermissionCreator(string methodName)
+        {
+            Permission permission = new Permission();
+            // WRITE PERMISSION BASED ON METHOD NAME
+            if (methodName.ToLower().StartsWith("get") && methodName.ToLower().EndsWith("s"))
+            {
+                permission.permissionName = $"CanView{methodName.Replace("Get", "")}";
+            }
+            else if (methodName.ToLower().StartsWith("get") && !methodName.ToLower().EndsWith("s"))
+            {
+                permission.permissionName = $"CanView{methodName.Replace("Get", "")}s";
+            }
+            else
+            {
+                permission.permissionName = $"Can{methodName}";
+            }
+            // APPEND PERMISSION TO TEXT FILE FOR LATER EXTRACTION
+            using (StreamWriter pen = new StreamWriter("permissions.txt"))
+            {
+                pen.WriteLine($"\t\tpublic bool {permission.permissionName}" + " { get; set; } = false;");
+            }
+            permission.fullPermissionLine = File.ReadAllText("permissions.txt");
+            File.Delete("permissions.txt");
+            return permission;
+        }
+        // REPEATED FILE NAME HANDLER - INACTIVE
         private string HandleRepeatedFileName(string className, string unchangedClassName)
         {
             int inc = 0;
