@@ -3,8 +3,8 @@
     internal interface IListOfAbstractMethods
     {
         void GetPermission();
-        void CreatePermission();
-        void UpdatePermission();
-        void DeletePermission();
+        void AddPermission();
+        void EditPermission();
+        void RemovePermission();
     }
 }

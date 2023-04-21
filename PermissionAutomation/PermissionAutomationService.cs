@@ -130,6 +130,18 @@ namespace PermissionAutomation
             {
                 permission.permissionName = $"CanView{methodName.Replace("Get", "")}s";
             }
+            else if (methodName.ToLower().StartsWith("add"))
+            {
+                permission.permissionName = $"CanCreate{methodName.Replace("Add", "")}";
+            }
+            else if (methodName.ToLower().StartsWith("edit"))
+            {
+                permission.permissionName = $"CanUpdate{methodName.Replace("Edit", "")}";
+            }
+            else if (methodName.ToLower().StartsWith("remove"))
+            {
+                permission.permissionName = $"CanDelete{methodName.Replace("Remove", "")}";
+            }
             else
             {
                 permission.permissionName = $"Can{methodName}";
